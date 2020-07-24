@@ -19,16 +19,35 @@ struct CollisionCategories{
     static let Apple: UInt32 = 0x1 << 2
     // Край сцены (экрана)
     static let EdgeBody:   UInt32 = 0x1 << 3
+    // Тело змеи
+    static let SnakeBodyPart: UInt32 = 0x1 << 3
 }
 
 class GameScene: SKScene {
-     // наша змея
+    // наша змея
     var snake: Snake?
     var counterLabel: SKLabelNode?
     var counter: Int = 0
     
     // вызывается при первом запуске сцены
     override func didMove(to view: SKView) {
+        
+        configureStartView(for: view)
+        createLeftButton(for: view)
+        createRightButton(for: view)
+        createApple()
+        createSnake(for: view)
+        
+        self.physicsWorld.contactDelegate = self
+        // устанавливаем категорию взаимодействия с другими объектами
+        self.physicsBody?.categoryBitMask = CollisionCategories.EdgeBody | CollisionCategories.SnakeBodyPart
+        // устанавливаем категории, с которыми будут пересекаться края сцены
+        self.physicsBody?.collisionBitMask = CollisionCategories.Snake | CollisionCategories.SnakeHead
+        
+        addCounterLabel(for: view)
+    }
+    
+    private func configureStartView(for view: SKView) {
         // цвет фона сцены
         backgroundColor = SKColor.black
         // вектор и сила гравитации
@@ -39,6 +58,10 @@ class GameScene: SKScene {
         self.physicsBody?.allowsRotation = false
         // включаем отображение отладочной информации
         view.showsPhysics = true
+        
+    }
+    
+    private func createLeftButton(for view: SKView) {
         // поворот против часовой стрелки
         // создаем ноду(объект)
         let counterClockwiseButton = SKShapeNode()
@@ -56,6 +79,9 @@ class GameScene: SKScene {
         counterClockwiseButton.name = "counterClockwiseButton"
         // Добавляем на сцену
         self.addChild(counterClockwiseButton)
+    }
+    
+    private func createRightButton(for view: SKView) {
         // Поворот по часовой стрелке
         let clockwiseButton = SKShapeNode()
         clockwiseButton.path = UIBezierPath(ovalIn: CGRect(x: 0, y: 0, width: 45, height: 45)).cgPath
@@ -65,24 +91,16 @@ class GameScene: SKScene {
         clockwiseButton.lineWidth = 10
         clockwiseButton.name = "clockwiseButton"
         self.addChild(clockwiseButton)
-        
-        createApple()
-        
-        snake = Snake(atPoint: CGPoint(x: view.scene!.frame.midX, y: view.scene!.frame.midY))
-        self.addChild(snake!)
-        
-        self.physicsWorld.contactDelegate = self
-        
-        // устанавливаем категорию взаимодействия с другими объектами
-        self.physicsBody?.categoryBitMask = CollisionCategories.EdgeBody
-        // устанавливаем категории, с которыми будут пересекаться края сцены
-        self.physicsBody?.collisionBitMask = CollisionCategories.Snake | CollisionCategories.SnakeHead
-        
-        addCounterLabel(for: view)
     }
     
+    private func createSnake(for view: SKView) {
+        snake = Snake(atPoint: CGPoint(x: view.scene!.frame.midX, y: view.scene!.frame.midY))
+        self.addChild(snake!)
+    }
+    
+    
     private func addCounterLabel(for view: SKView) {
-        counterLabel = SKLabelNode(text: "Жизнь: 0")
+        counterLabel = SKLabelNode(text: "Life: 0")
         counterLabel?.position = CGPoint(x: view.frame.size.width-100, y: view.frame.size.height-100)
         self.addChild(counterLabel!)
     }
@@ -126,10 +144,10 @@ class GameScene: SKScene {
     // вызывается при обрыве нажатия на экран, например, если телефон примет звонок и свернет приложение
     override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
     }
-  
+    
     // вызывается при обработке кадров сцены
     override func update(_ currentTime: TimeInterval) {
-            snake!.move()
+        snake!.move()
     }
     
     // MARK: - Helpers
@@ -166,9 +184,21 @@ extension GameScene: SKPhysicsContactDelegate {
             // создаем новое яблоко
             createApple()
         case CollisionCategories.EdgeBody: // проверяем, что это стенка экрана
-            
             // ДОМАШКА
-
+            snake?.removeFromParent()
+            snake = Snake(atPoint: CGPoint(x: 10, y: 10))
+            self.addChild(snake!)
+            counter += 1
+            self.counterLabel?.text = "Life: \(counter)"
+            break
+        case CollisionCategories.SnakeBodyPart:
+            
+            snake?.removeFromParent()
+            snake = Snake(atPoint: CGPoint(x: 10, y: 10))
+            self.addChild(snake!)
+            counter += 1
+            self.counterLabel?.text = "Life: \(counter)"
+            
             break
         default:
             break

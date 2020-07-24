@@ -18,8 +18,8 @@ class Snake: SKShapeNode {
     let moveSpeed = 125.0
     // угол, необходимый для расчета направления
     var angle: CGFloat = 0.0
-
-   
+    
+    
     // конструктор
     convenience init(atPoint point: CGPoint) {
         self.init()
@@ -55,7 +55,7 @@ class Snake: SKShapeNode {
             moveBodyPart(previousBodyPart, c: currentBodyPart)
         }
     }
-   
+    
     // перемещаем голову
     func moveHead(_ head: SnakeBodyPart){
         // рассчитываем смещение точки
@@ -68,7 +68,7 @@ class Snake: SKShapeNode {
         // запуск действия перемещения
         head.run(moveAction)
     }
-   
+    
     // перемещаем сегмент змеи
     func moveBodyPart(_ p: SnakeBodyPart, c: SnakeBodyPart){
         // перемещаем текущий элемент к предыдущему
